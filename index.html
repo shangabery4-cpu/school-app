@@ -1,60 +1,67 @@
 <!DOCTYPE html>
-<html lang="ku">
+<html lang="ku" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<title>School Login</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>School Login</title>
 </head>
 <body style="font-family:sans-serif;text-align:center;margin-top:100px;">
 
-<h2>چوونەژوورەوە</h2>
+  <h2>چوونەژوورەوە</h2>
 
-<input id="teacherUsername" placeholder="username"><br><br>
-<input id="teacherPassword" type="password" placeholder="password"><br><br>
+  <input id="teacherUsername" placeholder="username"><br><br>
+  <input id="teacherPassword" type="password" placeholder="password"><br><br>
 
-<button onclick="loginTeacher()">Login</button>
+  <button onclick="loginTeacher()">Login</button>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCkIJjcf9j6sWIa_Ze9qFDMvZYOSCQoiWQ",
-  authDomain: "school-system-11b6c.firebaseapp.com",
-  projectId: "school-system-11b6c",
-  storageBucket: "school-system-11b6c.firebasestorage.app",
-  messagingSenderId: "259229704329",
-  appId: "1:259229704329:web:87c69aebf8e88e0ccbe658"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyCkIJjcf9j6sWIa_Ze9qFDMvZYOSCQoiWQ",
+      authDomain: "school-system-11b6c.firebaseapp.com",
+      projectId: "school-system-11b6c",
+      storageBucket: "school-system-11b6c.firebasestorage.app",
+      messagingSenderId: "259229704329",
+      appId: "1:259229704329:web:87c69aebf8e88e0ccbe658"
+    };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-async function loginTeacherCloud(username, password){
-  const snapshot = await getDocs(collection(db, "teachers"));
-  let found = null;
-  snapshot.forEach(doc => {
-    const t = doc.data();
-    if(t.username === username && t.password === password){
-      found = t;
+    async function loginTeacherCloud(username, password){
+      const snapshot = await getDocs(collection(db, "teachers"));
+      let found = null;
+
+      snapshot.forEach(doc => {
+        const t = doc.data();
+
+        if (
+          String(t.username || "").trim().toLowerCase() === String(username || "").trim().toLowerCase() &&
+          String(t.password || "").trim() === String(password || "").trim()
+        ) {
+          found = t;
+        }
+      });
+
+      return found;
     }
-  });
-  return found;
-}
 
-window.loginTeacher = async function(){
-  const username = document.getElementById("teacherUsername").value;
-  const password = document.getElementById("teacherPassword").value;
+    window.loginTeacher = async function(){
+      const username = document.getElementById("teacherUsername").value;
+      const password = document.getElementById("teacherPassword").value;
 
-  const teacher = await loginTeacherCloud(username, password);
+      const teacher = await loginTeacherCloud(username, password);
 
-  if(!teacher){
-    alert("هەڵەیە");
-    return;
-  }
+      if(!teacher){
+        alert("هەڵەیە");
+        return;
+      }
 
-  alert("سەرکەوتوو بوو");
-};
-</script>
+      alert("بە سەرکەوتوویی چوویتە ژوورەوە");
+    };
+  </script>
 
 </body>
 </html>
