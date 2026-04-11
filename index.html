@@ -9162,6 +9162,7 @@ const TEACHERS_KEY = 'ss_teachers_v1';
 const SESSION_KEY = 'ss_teacher_session_v1';
 const defaultTeachers = [
   { id:'t_admin', name:'ئەدمین', username:'admin', password:'123456', role:'admin', classes:['all'], active:true },
+  { id:'t_aso', name:'ئاسۆ', username:'aso', password:'1234', role:'teacher', classes:[], active:true },
   { id:'t_001', name:'مامۆستا', username:'teacher', password:'1234', role:'teacher', classes:[], active:true }
 ];
 
@@ -9350,6 +9351,12 @@ async function loginTeacher(){
 
 function logoutTeacher(){
   clearTeacherSession();
+  const u = document.getElementById('teacherUsername');
+  const p = document.getElementById('teacherPassword');
+  const m = document.getElementById('teacherLoginMsg');
+  if(u) u.value = '';
+  if(p) p.value = '';
+  if(m) m.textContent = '';
   showTeacherLogin('تکایە دووبارە بچۆ ژوورەوە');
 }
 
