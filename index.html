@@ -9180,9 +9180,20 @@ function getTeachers(){
   try{ return JSON.parse(SSStore.getItem(TEACHERS_KEY) || '[]') || []; }catch(_){ return []; }
 }
 function saveTeachers(list){ try{ SSStore.setItem(TEACHERS_KEY, JSON.stringify(Array.isArray(list)?list:[])); }catch(_){} }
-function getTeacherSession(){ try{ return JSON.parse(SSStore.getItem(SESSION_KEY) || 'null'); }catch(_){ return null; } }
-function saveTeacherSession(session){ try{ SSStore.setItem(SESSION_KEY, JSON.stringify(session)); }catch(_){} }
-function clearTeacherSession(){ try{ SSStore.removeItem(SESSION_KEY); }catch(_){} }
+function getTeacherSession(){
+  try{
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(_){ return null; }
+}
+function saveTeacherSession(session){
+  try{ sessionStorage.setItem(SESSION_KEY, JSON.stringify(session)); }catch(_){}
+  try{ SSStore.removeItem(SESSION_KEY); }catch(_){}
+}
+function clearTeacherSession(){
+  try{ sessionStorage.removeItem(SESSION_KEY); }catch(_){}
+  try{ SSStore.removeItem(SESSION_KEY); }catch(_){}
+}
 
 function getFirebaseConfig(){
   try{ return window.SS_FIREBASE_CONFIG || null; }catch(_){ return null; }
@@ -9208,23 +9219,15 @@ function initTeacherCloud(){
   return __ssTeacherCloud;
 }
 function normalizeTeacherRecord(t){
-  const rawClasses = Array.isArray(t?.classes) ? t.classes
-    : Array.isArray(t?.Classes) ? t.Classes
-    : (typeof t?.classes === 'string' ? t.classes.split(',')
-    : (typeof t?.Classes === 'string' ? t.Classes.split(',') : []));
-  const classes = (rawClasses || []).map(v => String(v).trim()).filter(Boolean);
-  const nameVal = t?.name ?? t?.Name ?? '';
-  const usernameVal = t?.username ?? t?.Username ?? '';
-  const passwordVal = t?.password ?? t?.Password ?? '';
-  const roleVal = String(t?.role ?? t?.Role ?? 'teacher').trim().toLowerCase();
+  const classes = Array.isArray(t?.classes) ? t.classes.map(v => String(v).trim()).filter(Boolean) : [];
   return {
-    id: String(t?.id || t?.Id || t?.ID || usernameVal || ('t_' + Date.now().toString(36))),
-    name: String(nameVal).trim(),
-    username: String(usernameVal).trim(),
-    password: String(passwordVal).trim(),
-    role: roleVal === 'admin' ? 'admin' : 'teacher',
+    id: String(t?.id || ('t_' + Date.now().toString(36))),
+    name: String(t?.name || ''),
+    username: String(t?.username || ''),
+    password: String(t?.password || ''),
+    role: String(t?.role || 'teacher') === 'admin' ? 'admin' : 'teacher',
     classes,
-    active: t?.active !== false && t?.Active !== false
+    active: t?.active !== false
   };
 }
 function saveTeachersMirror(list){
@@ -9331,36 +9334,20 @@ async function loginTeacher(){
   const msg = document.getElementById('teacherLoginMsg');
   if(!username || !password){ if(msg) msg.textContent = 'ناوی بەکارهێنەر و پاسۆرد بنووسە'; return; }
   if(msg) msg.textContent = 'چاوەڕێ بکە...';
-  let teacher = await findTeacherCloud(normalizedUsername, password);
- if(!teacher){
-  const teachers = getTeachers();
-  teacher = teachers.find(t =>
-    t &&
-    t.active !== false &&
-    String(t.username || '').trim().toLowerCase() === normalizedUsername &&
-    String(t.password || '').trim() === password
-  );
+  let teacher = null;
+  try{ teacher = await findTeacherCloud(normalizedUsername, password); }catch(_){ teacher = null; }
+  if(!teacher){
+    const teachers = getTeachers();
+    teacher = teachers.find(t => t && t.active !== false && String(t.username||'').trim().toLowerCase() === normalizedUsername && String(t.password||'').trim() === password) || null;
+  }
+  if(!teacher){ if(msg) msg.textContent = 'ناوی بەکارهێنەر یان پاسۆرد هەڵەیە'; return; }
+  teacher = normalizeTeacherRecord(teacher);
+  saveTeacherSession({ teacherId:teacher.id, name:teacher.name, username:teacher.username, role:teacher.role || 'teacher', classes:Array.isArray(teacher.classes)?teacher.classes:[], loginAt:new Date().toISOString() });
+  if(msg) msg.textContent = '';
+  hideTeacherLogin();
+  applyTeacherSession();
 }
 
-
-if(!teacher){
-  if(msg) msg.textContent = 'ناوی بەکارهێنەر یان پاسوورد هەڵەیە';
-  return;
-}
-
-teacher = normalizeTeacherRecord(teacher);
-saveTeacherSession({
-  teacherId: teacher.id,
-  name: teacher.name,
-  username: teacher.username,
-  role: teacher.role || 'teacher',
-  classes: Array.isArray(teacher.classes) ? teacher.classes : []
-});
-
-if(msg) msg.textContent = 'سەرکەوتوو بوو';
-
-hideTeacherLogin();
-applyTeacherSession();
 function logoutTeacher(){
   clearTeacherSession();
   showTeacherLogin('تکایە دووبارە بچۆ ژوورەوە');
