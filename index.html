@@ -9342,14 +9342,6 @@ async function loginTeacher(){
   );
 }
 
-if(!teacher && normalizedUsername === "aso" && password === "1234"){
-  teacher = {
-    id: "aso",
-    name: "Aso",
-    username: "aso",
-    role: "teacher"
-  };
-}
 
 if(!teacher){
   if(msg) msg.textContent = 'ناوی بەکارهێنەر یان پاسوورد هەڵەیە';
